@@ -1,0 +1,114 @@
+processor	: 0
+vendor_id	: GenuineIntel
+cpu family	: 6
+model		: 63
+model name	: Intel(R) Xeon(R) CPU E5-2673 v3 @ 2.40GHz
+stepping	: 2
+microcode	: 0xffffffff
+cpu MHz		: 2397.215
+cache size	: 30720 KB
+physical id	: 0
+siblings	: 1
+core id		: 0
+cpu cores	: 1
+apicid		: 0
+initial apicid	: 0
+fpu		: yes
+fpu_exception	: yes
+cpuid level	: 13
+wp		: yes
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx lm constant_tsc rep_good nopl eagerfpu pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm abm fsgsbase bmi1 avx2 smep bmi2 erms xsaveopt
+bugs		:
+bogomips	: 4794.43
+clflush size	: 64
+cache_alignment	: 64
+address sizes	: 42 bits physical, 48 bits virtual
+power management:
+
+var files = null;
+var mydata = null;
+var path   =   require("path");
+var fs    =  require("fs");
+var http  =  require("http");
+var express  =  require("express");
+var childProcess = require("child_process");
+var process = require("process");
+var app  =  express();
+
+app.use(express.static(__dirname+''));
+
+app.get('/', function(req, res) {
+  res.sendFile('index.html', {root:__dirname});
+});
+
+app.get('/procfs', function(req, res) {
+  var config = process.config;
+  console.log(typeof config);
+  childProcess.exec('echo config > configFile.txt', (error, stdout, stderr) => {
+    if (error) {
+     console.log(error);
+    } else {
+      console.log(stdout);
+    }
+  });
+
+  childProcess.exec('cat /proc/cpuinfo > cpuFile.txt', (error, stdout, stderr) => {
+    if (error) {
+     console.log(error);
+    } else {
+      console.log(stdout);
+    }
+  });
+
+  childProcess.exec('cat cpuFile.txt >> configFile.txt', (error, stdout, stderr) => {
+    if (error) {
+     console.log(error);
+    } else {
+      console.log(stdout);
+    }
+  });
+
+  fs.readFile("cpuFile.txt", 'utf8', function(err, data) {
+    mydata = data;
+    console.log('read procfs file info');
+    console.log(mydata);
+  });
+  console.log('displaying procfs file info');
+  res.send(JSON.stringify(config, null, 2));
+});
+
+app.get('/files', function(req, res) {
+     console.log('displaying files');
+     res.send(files);
+});
+
+var cmd = "ls > filelist.txt";
+
+childProcess.exec(cmd, (error, stdout, stderr) => {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log(stdout);
+  }
+});
+
+fs.readFile("filelist.txt", "utf8", function(err, data) {
+    files = data;
+    console.log('read files');
+});
+
+//capture logs in the console
+//app.use(express.logger("dev"));
+
+//serve static files - blank in the quotes means server.js is in the same folder as your HTML files.
+//app.use(express.static(__dirname + ''));
+
+//404 error
+app.use(function(req, res, next) {
+  res.send(404, "file not found");
+});
+
+//start server
+app.listen(8000);
+console.log("listening on port 8000");
+
