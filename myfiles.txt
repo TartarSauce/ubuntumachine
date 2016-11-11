@@ -1,6 +1,0 @@
-filelist.txt
-index.html
-myfiles.txt
-node_modules
-package.json
-server.js
